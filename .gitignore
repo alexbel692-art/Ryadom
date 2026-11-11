@@ -1,0 +1,12 @@
+# секреты и данные сервера — не коммитить
+server/.env
+server/id_ed25519
+server/data/
+server/panel-data/
+server/caddy-data/
+server/caddy-config/
+server/downloads/
+server/client-settings.txt
+*.jks
+__pycache__/
+.DS_Store

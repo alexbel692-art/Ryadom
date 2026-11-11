@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0E7C66"/>
+      <stop offset="1" stop-color="#0B4F6C"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- экран -->
+  <rect x="112" y="128" width="288" height="196" rx="28" fill="none" stroke="#fff" stroke-width="30"/>
+  <path d="M206 392h100" stroke="#fff" stroke-width="30" stroke-linecap="round"/>
+  <path d="M256 324v68" stroke="#fff" stroke-width="30"/>
+  <!-- курсор удалённого управления -->
+  <path d="M222 168 L222 292 L252 262 L274 310 L298 299 L276 252 L318 250 Z" fill="#FFD166" stroke="#FFD166" stroke-width="10" stroke-linejoin="round"/>
+</svg>

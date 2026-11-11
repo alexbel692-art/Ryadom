@@ -1,0 +1,34 @@
+name: Ryadom Config
+
+# Готовит параметры сборки клиента из client/ryadom.json и переменных репозитория.
+# Вызывается из generator-*.yml вместо загрузки настроек с сервера rdgen.
+
+on:
+  workflow_call:
+    inputs:
+      platform:
+        required: true
+        type: string
+
+jobs:
+  config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Собрать параметры клиента
+        env:
+          RYADOM_HOST: ${{ vars.RYADOM_HOST }}
+          RYADOM_KEY: ${{ vars.RYADOM_KEY }}
+          RYADOM_API: ${{ vars.RYADOM_API }}
+        run: |
+          python3 client/build_config.py "${{ inputs.platform }}" \
+            "$RYADOM_HOST" "$RYADOM_KEY" "$RYADOM_API" \
+            "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}" .
+
+      - name: Upload Encrypted Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: encrypted-secrets-zip
+          path: secrets.zip
+          retention-days: 1

@@ -1,0 +1,6 @@
+{
+  "_comment": "Сервер, который вшивается в клиент. host — домен или IP VPS, key — содержимое server/data/id_ed25519.pub (открытый ключ, не секрет), api — адрес веб-панели. После изменения пересоберите клиент (Actions → Run workflow).",
+  "host": "ryadom.example.ru",
+  "key": "NFiOfVMKgIV4FBk8Rkx18Ug5GlfPW17hIx0XdBwChz8=",
+  "api": "https://ryadom.example.ru"
+}

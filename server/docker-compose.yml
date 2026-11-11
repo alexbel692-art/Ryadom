@@ -1,0 +1,67 @@
+# «Рядом» — сервер удалённого доступа.
+# Настройки берутся из файла .env рядом (его создаёт install.sh, пример — .env.example).
+#
+#   docker compose --profile https up -d --build   # есть домен → HTTPS через Caddy
+#   docker compose up -d --build                   # только IP → панель на http://IP:21114
+
+services:
+  # Сервер ID (rendezvous): выдаёт ID, помогает компьютерам найти друг друга
+  hbbs:
+    image: rustdesk/rustdesk-server:latest
+    container_name: ryadom-hbbs
+    command: hbbs -r ${DOMAIN}:21117 -k _
+    volumes:
+      - ./data:/root
+    network_mode: host          # нужен реальный IP клиентов для прямых соединений
+    depends_on:
+      - hbbr
+    restart: unless-stopped
+
+  # Сервер ретрансляции (relay): гонит трафик, если напрямую соединиться нельзя
+  hbbr:
+    image: rustdesk/rustdesk-server:latest
+    container_name: ryadom-hbbr
+    command: hbbr -k _
+    volumes:
+      - ./data:/root
+    network_mode: host
+    restart: unless-stopped
+
+  # Веб-панель и API для клиентов
+  panel:
+    build: ../panel
+    container_name: ryadom-panel
+    environment:
+      RYADOM_DOMAIN: ${DOMAIN}
+      RYADOM_API_URL: ${API_URL}
+      RYADOM_APP_NAME: ${APP_NAME:-Рядом}
+      RYADOM_URI_SCHEME: ${URI_SCHEME:-ryadom}
+      RYADOM_ADMIN_USER: ${ADMIN_USER:-admin}
+      RYADOM_ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      RYADOM_TRUST_PROXY: ${TRUST_PROXY:-1}
+      RYADOM_AUDIT_KEEP_DAYS: ${AUDIT_KEEP_DAYS:-365}
+    volumes:
+      - ./panel-data:/app/data
+      - ./downloads:/app/downloads:ro
+      - ./data:/rustdesk:ro      # отсюда панель читает публичный ключ hbbs
+    ports:
+      - "${PANEL_BIND:-127.0.0.1}:21114:21114"
+    restart: unless-stopped
+
+  # HTTPS (сертификат Let's Encrypt выпускается автоматически)
+  caddy:
+    image: caddy:2
+    container_name: ryadom-caddy
+    profiles: ["https"]
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy-data:/data
+      - ./caddy-config:/config
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - panel
+    restart: unless-stopped

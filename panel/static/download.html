@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Удалённая поддержка — скачать клиент</title>
+<link rel="icon" href="/logo.svg">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="dl">
+  <div class="hero">
+    <img src="/logo.svg" alt="">
+    <div>
+      <h1 id="app">Рядом</h1>
+      <div class="muted">Удалённая поддержка от IT-отдела</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Скачайте программу</h2>
+    <div class="muted small">Выберите вашу систему. Подходящая подсвечена.</div>
+    <div class="grid" id="files"></div>
+    <h3>Что дальше</h3>
+    <ol>
+      <li>Установите и запустите программу.</li>
+      <li>Сообщите специалисту <b>ID</b> и <b>пароль</b> из главного окна.</li>
+      <li>Когда придёт запрос на подключение, нажмите <b>«Принять»</b>.</li>
+    </ol>
+    <p class="muted small">На macOS при первом запуске разрешите программе «Запись экрана» и «Универсальный доступ» в Системных настройках → Конфиденциальность и безопасность.</p>
+  </div>
+
+  <details class="card" style="margin-top:14px">
+    <summary style="cursor:pointer"><b>Для специалистов:</b> настройка вручную</summary>
+    <p class="muted small">Если у вас стандартный клиент, а не фирменная сборка, откройте Настройки → Сеть → Сервер ID/ретрансляции и укажите:</p>
+    <div class="kv" id="srv"></div>
+    <p class="muted small">Или скопируйте строку конфигурации и вставьте её через кнопку импорта в том же окне:</p>
+    <code class="block copy" id="cfg" title="Нажмите, чтобы скопировать"></code>
+  </details>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),1800); }
+function copy(t){ navigator.clipboard?.writeText(t).then(()=>toast('Скопировано'), ()=>toast('Не удалось скопировать')); }
+function myOS(){
+  const u = navigator.userAgent;
+  if (/Android/i.test(u)) return 'Android';
+  if (/Windows/i.test(u)) return 'Windows';
+  if (/Mac OS X|Macintosh/i.test(u)) return 'macOS';
+  if (/Linux/i.test(u)) return 'Linux';
+  return '';
+}
+const size = (n) => n > 1048576 ? (n/1048576).toFixed(1)+' МБ' : Math.max(1, Math.round(n/1024))+' КБ';
+fetch('/panel/api/public').then(r => r.json()).then(d => {
+  document.title = d.app_name + ' — скачать клиент';
+  $('#app').textContent = d.app_name;
+  const mine = myOS();
+  const files = d.downloads.sort((a,b) => (b.platform===mine) - (a.platform===mine));
+  $('#files').innerHTML = files.length ? files.map(f => `
+    <div class="card os ${f.platform===mine?'mine':''}">
+      <b>${esc(f.platform)}</b>
+      <span class="muted small mono">${esc(f.name)} · ${size(f.size)}</span>
+      <a class="btn ${f.platform===mine?'primary':''}" href="${esc(f.url)}">Скачать</a>
+    </div>`).join('') : '<div class="muted">Администратор ещё не загрузил установочные файлы.</div>';
+  const rows = [['ID-сервер', d.id_server], ['Сервер ретрансляции', d.relay_server], ['API-сервер', d.api_server], ['Ключ', d.key || '— (ключ ещё не создан)']];
+  $('#srv').innerHTML = rows.map(([k,v]) => `<div class="k">${k}</div><div class="v mono copy" data-v="${esc(v)}">${esc(v)}</div>`).join('');
+  $('#cfg').textContent = d.config;
+  document.querySelectorAll('.copy').forEach(el => el.onclick = () => copy(el.dataset.v || el.textContent));
+}).catch(() => { $('#files').innerHTML = '<div class="err">Сервер недоступен</div>'; });
+</script>
+</body>
+</html>
