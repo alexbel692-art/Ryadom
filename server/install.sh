@@ -55,7 +55,8 @@ if [ -f .env ]; then
   DOMAIN="$(grep '^DOMAIN=' .env | cut -d= -f2-)"
   API_URL="$(grep '^API_URL=' .env | cut -d= -f2-)"
 else
-  ADMIN_PASSWORD="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 14)"
+  ADMIN_PASSWORD="$(LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom 2>/dev/null | head -c 14 || true)"
+  [ ${#ADMIN_PASSWORD} -ge 12 ] || ADMIN_PASSWORD="$(openssl rand -hex 8)"
   cat > .env <<EOF
 DOMAIN=$DOMAIN
 API_URL=$API_URL
@@ -78,7 +79,7 @@ if [ -f id_ed25519 ] && [ ! -f data/id_ed25519 ]; then
 fi
 
 hdr "Брандмауэр"
-if command -v ufw >/dev/null 2>&1 && ufw status | grep -q "Status: active"; then
+if command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep "Status: active" >/dev/null; then
   ufw allow 21115:21117/tcp >/dev/null
   ufw allow 21116/udp >/dev/null
   if [ "$MODE" = https ]; then ufw allow 80/tcp >/dev/null; ufw allow 443/tcp >/dev/null; else ufw allow 21114/tcp >/dev/null; fi
