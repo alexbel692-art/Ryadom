@@ -343,6 +343,7 @@ def s(v, n=512):
 # ---------------------------------------------------------------- HTTP
 class Handler(BaseHTTPRequestHandler):
     server_version = "Ryadom"
+    timeout = 120  # закрывать зависшие/брошенные соединения
     sys_version = ""
     protocol_version = "HTTP/1.1"
 
@@ -381,11 +382,24 @@ class Handler(BaseHTTPRequestHandler):
     def send_text(self, text, status=200):
         self.send_body(status, text.encode(), "text/plain; charset=utf-8", {"Cache-Control": "no-store"})
 
-    def read_json(self):
-        n = int(self.headers.get("Content-Length") or 0)
+    def read_body(self):
+        """Тело запроса читается целиком ВСЕГДА, даже если ответ — ошибка: иначе остаток
+        тела испортит следующий запрос в том же keep-alive соединении (Apache/Caddy их переиспользуют)."""
+        if getattr(self, "_body", None) is not None:
+            return self._body
+        try:
+            n = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            n = 0
         if n > MAX_BODY:
+            self.close_connection = True
+            self._body = b""
             raise HttpError(413, "Слишком большой запрос")
-        raw = self.rfile.read(n) if n else b""
+        self._body = self.rfile.read(n) if n > 0 else b""
+        return self._body
+
+    def read_json(self):
+        raw = self.read_body()
         if not raw.strip():
             return {}
         try:
@@ -423,10 +437,15 @@ class Handler(BaseHTTPRequestHandler):
         self.dispatch("DELETE")
 
     def dispatch(self, method):
+        self._body = None
+        if self.headers.get("Transfer-Encoding", "").lower() == "chunked":
+            self.close_connection = True   # chunked-тело не поддерживаем — не переиспользуем соединение
         url = urlparse(self.path)
         path = url.path.rstrip("/") or "/"
         self.query = {k: v[-1] for k, v in parse_qs(url.query).items()}
         try:
+            if method in ("POST", "PUT", "DELETE"):
+                self.read_body()
             if path.startswith("/api/"):
                 return self.client_api(method, path)
             if path.startswith("/panel/api/"):
