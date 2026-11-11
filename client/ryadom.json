@@ -3,7 +3,7 @@
   "exename": "Ryadom",
   "appname": "Ryadom",
   "compname": "Ryadom",
-  "androidappid": "ru.ryadom.app",
+  "androidappid": "com.carriez.flutter_hbb",
   "direction": "both",
   "installation": "installationY",
   "settings": "settingsY",

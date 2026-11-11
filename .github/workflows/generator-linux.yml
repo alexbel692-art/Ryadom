@@ -143,6 +143,17 @@ jobs:
           repository: rustdesk/rustdesk
           submodules: recursive
 
+      - name: "Ryadom: совместимость входа с открытым hbbs"
+        shell: bash
+        run: |
+          # Клиент с выполненным входом ждёт от hbbs обмена ключами по TCP. Открытый hbbs его не
+          # делает, и подключение падает с «Failed to secure tcp: deadline has elapsed».
+          # Токен входа нужен только платному hbbs Pro, поэтому в hbbs его не отправляем.
+          f=src/ui_session_interface.rs
+          grep -qF 'let token = LocalConfig::get_option("access_token");' "$f"
+          perl -pi -e 's/let token = LocalConfig::get_option\("access_token"\);/let token = String::new(); \/\/ Ryadom: open-source hbbs, no TCP key exchange/' "$f"
+          grep -n "Ryadom: open-source hbbs" "$f"
+
       - name: Set custom app version
         continue-on-error: true
         if: ${{ inputs.app_version != '' }}
@@ -753,6 +764,7 @@ jobs:
 
   build-rustdesk-linux-drm:
     needs: [generate-bridge-linux, setup]
+    if: false   # Ryadom: drm-вариант ломается при переименовании программы (tmpdeb/usr/lib/rustdesk)
     name: build rustdesk linux drm x86_64
     runs-on: ubuntu-22.04
     steps:
@@ -812,6 +824,17 @@ jobs:
         with:
           repository: rustdesk/rustdesk
           submodules: recursive
+
+      - name: "Ryadom: совместимость входа с открытым hbbs"
+        shell: bash
+        run: |
+          # Клиент с выполненным входом ждёт от hbbs обмена ключами по TCP. Открытый hbbs его не
+          # делает, и подключение падает с «Failed to secure tcp: deadline has elapsed».
+          # Токен входа нужен только платному hbbs Pro, поэтому в hbbs его не отправляем.
+          f=src/ui_session_interface.rs
+          grep -qF 'let token = LocalConfig::get_option("access_token");' "$f"
+          perl -pi -e 's/let token = LocalConfig::get_option\("access_token"\);/let token = String::new(); \/\/ Ryadom: open-source hbbs, no TCP key exchange/' "$f"
+          grep -n "Ryadom: open-source hbbs" "$f"
 
       - name: Set custom app version
         continue-on-error: true
@@ -1348,6 +1371,17 @@ jobs:
           repository: rustdesk/rustdesk
           submodules: recursive
 
+      - name: "Ryadom: совместимость входа с открытым hbbs"
+        shell: bash
+        run: |
+          # Клиент с выполненным входом ждёт от hbbs обмена ключами по TCP. Открытый hbbs его не
+          # делает, и подключение падает с «Failed to secure tcp: deadline has elapsed».
+          # Токен входа нужен только платному hbbs Pro, поэтому в hbbs его не отправляем.
+          f=src/ui_session_interface.rs
+          grep -qF 'let token = LocalConfig::get_option("access_token");' "$f"
+          perl -pi -e 's/let token = LocalConfig::get_option\("access_token"\);/let token = String::new(); \/\/ Ryadom: open-source hbbs, no TCP key exchange/' "$f"
+          grep -n "Ryadom: open-source hbbs" "$f"
+
       - name: Set custom app version
         continue-on-error: true
         if: ${{ inputs.app_version != '' }}
@@ -1511,6 +1545,17 @@ jobs:
         with:
           repository: rustdesk/rustdesk
           submodules: recursive
+
+      - name: "Ryadom: совместимость входа с открытым hbbs"
+        shell: bash
+        run: |
+          # Клиент с выполненным входом ждёт от hbbs обмена ключами по TCP. Открытый hbbs его не
+          # делает, и подключение падает с «Failed to secure tcp: deadline has elapsed».
+          # Токен входа нужен только платному hbbs Pro, поэтому в hbbs его не отправляем.
+          f=src/ui_session_interface.rs
+          grep -qF 'let token = LocalConfig::get_option("access_token");' "$f"
+          perl -pi -e 's/let token = LocalConfig::get_option\("access_token"\);/let token = String::new(); \/\/ Ryadom: open-source hbbs, no TCP key exchange/' "$f"
+          grep -n "Ryadom: open-source hbbs" "$f"
 
       - name: Set custom app version
         continue-on-error: true
